@@ -9,7 +9,7 @@ type Deck struct {
 	cards []Card
 }
 
-func MakeDeck() *Deck {
+func MakeDeck() Deck {
 	deck := Deck{}
 	deck.cards = make([]Card, 52)
 	count := 0
@@ -20,7 +20,7 @@ func MakeDeck() *Deck {
 			count++
 		}
 	}
-	return &deck
+	return deck
 }
 
 func (deck *Deck) CardsRemaining() int {

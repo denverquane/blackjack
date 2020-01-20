@@ -38,12 +38,50 @@ func (hand *Hand) Add(card Card) {
 	hand.cards = append(hand.cards, card)
 }
 
+func (hand Hand) IsSoft() bool {
+	for _, v := range hand.cards {
+		if v.Rank == ACE {
+			return true
+		}
+	}
+	return false
+}
+
+func (hand Hand) IsBust() bool {
+	return hand.values[0] > 21
+}
+
+func (hand Hand) FirstCard() Card {
+	return hand.cards[0]
+}
+
+func (hand Hand) HighestPlay() int {
+	for i := len(hand.values) - 1; i > -1; i-- {
+		if hand.values[i] <= 22 {
+			return hand.values[i]
+		}
+	}
+	//all busts
+	return 0
+}
+
 func (hand Hand) ToString() string {
 	str := "Hand has cards:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToString() + "\n"
 	}
 	str += "and values:\n"
+	for _, v := range hand.values {
+		str += "  " + strconv.FormatInt(int64(v), 10) + "\n"
+	}
+	return str
+}
+func (hand Hand) ToAscii() string {
+	str := "Hand has cards:\n"
+	for _, v := range hand.cards {
+		str += "  " + v.ToAscii()
+	}
+	str += "\nand values:\n"
 	for _, v := range hand.values {
 		str += "  " + strconv.FormatInt(int64(v), 10) + "\n"
 	}
