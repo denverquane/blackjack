@@ -4,7 +4,8 @@ type CardRank int
 type CardSuit int
 
 const (
-	ACE CardRank = iota
+	NULLRANK CardRank = iota
+	ACE
 	TWO
 	THREE
 	FOUR
@@ -20,29 +21,32 @@ const (
 )
 
 var CardRankStrings = map[CardRank]string{
-	ACE:   "Ace",
-	TWO:   "Two",
-	THREE: "Three",
-	FOUR:  "Four",
-	FIVE:  "Five",
-	SIX:   "Six",
-	SEVEN: "Seven",
-	EIGHT: "Eight",
-	NINE:  "Nine",
-	TEN:   "Ten",
-	JACK:  "Jack",
-	QUEEN: "Queen",
-	KING:  "King",
+	NULLRANK: "Null",
+	ACE:      "Ace",
+	TWO:      "Two",
+	THREE:    "Three",
+	FOUR:     "Four",
+	FIVE:     "Five",
+	SIX:      "Six",
+	SEVEN:    "Seven",
+	EIGHT:    "Eight",
+	NINE:     "Nine",
+	TEN:      "Ten",
+	JACK:     "Jack",
+	QUEEN:    "Queen",
+	KING:     "King",
 }
 
 const (
-	SPADES CardSuit = iota
+	NULLSUIT CardSuit = iota
+	SPADES
 	HEARTS
 	CLUBS
 	DIAMONDS
 )
 
 var CardSuitStrings = map[CardSuit]string{
+	NULLSUIT: "Null",
 	SPADES:   "Spades",
 	HEARTS:   "Hearts",
 	CLUBS:    "Clubs",
