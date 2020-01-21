@@ -65,25 +65,29 @@ func (hand Hand) HighestPlay() int {
 	return 0
 }
 
-func (hand Hand) ToString() string {
+func (hand Hand) ToString(printValues bool) string {
 	str := "Hand has cards:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToString() + "\n"
 	}
-	str += "and values:\n"
-	for _, v := range hand.values {
-		str += "  " + strconv.FormatInt(int64(v), 10) + "\n"
+	if printValues {
+		str += "and values:\n"
+		for _, v := range hand.values {
+			str += "  " + strconv.FormatInt(int64(v), 10) + "\n"
+		}
 	}
 	return str
 }
-func (hand Hand) ToAscii() string {
+func (hand Hand) ToAscii(printValues bool) string {
 	str := "Hand has cards:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToAscii()
 	}
-	str += "\nand values:\n"
-	for _, v := range hand.values {
-		str += "  " + strconv.FormatInt(int64(v), 10) + "\n"
+	if printValues {
+		str += "\nand values:\n"
+		for _, v := range hand.values {
+			str += "  " + strconv.FormatInt(int64(v), 10) + "\n"
+		}
 	}
 	return str
 }

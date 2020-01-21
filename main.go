@@ -17,23 +17,16 @@ const MaxCardsInPlay = 14
 
 func main() {
 	rand.Seed(time.Now().Unix())
-	//
-	//singleDeck := deck.MakeDeck()
-	//
-	//card1, _ := singleDeck.PullRandomCard()
-	//card2, _ := singleDeck.PullRandomCard()
-	//card3, _ := singleDeck.PullRandomCard()
-	//card4, _ := singleDeck.PullRandomCard()
-	//hand := deck.MakeHand(card1, card2)
-	//hand.Add(card3)
-	//hand.Add(card4)
-	//fmt.Println(hand.ToAscii())
 
 	shoe := deck.MakeShoe(2)
-	if shoe.GetCardsRemainingBeforeCut() > MaxCardsInPlay {
-		playHand(shoe)
-	}
 
+	for {
+		for shoe.GetCardsRemainingBeforeCut() > MaxCardsInPlay {
+			fmt.Println("\n\n\n--- NEW GAME ---\n\n\n")
+			playHand(shoe)
+		}
+		shoe = deck.MakeShoe(2)
+	}
 }
 
 func playHand(shoe deck.Shoe) {
@@ -57,7 +50,7 @@ func playHand(shoe deck.Shoe) {
 
 	for !playerHand.IsBust() {
 		fmt.Println("Player:")
-		fmt.Println(playerHand.ToAscii())
+		fmt.Println(playerHand.ToAscii(false))
 		action := deck.GetPlayerInput()
 		if action == deck.HIT {
 			card, err := shoe.PullRandomCard()
@@ -70,7 +63,7 @@ func playHand(shoe deck.Shoe) {
 		}
 	}
 	fmt.Println("- Final Player Hand -")
-	fmt.Println(playerHand.ToAscii())
+	fmt.Println(playerHand.ToAscii(false))
 
 	for dealer.DoesHit(*dealerHand) {
 		card, err := shoe.PullRandomCard()
@@ -80,12 +73,12 @@ func playHand(shoe deck.Shoe) {
 		dealerHand.Add(card)
 	}
 	fmt.Println("Dealer:")
-	fmt.Println(dealerHand.ToAscii())
+	fmt.Println(dealerHand.ToAscii(false))
 
 	if dealerHand.HighestPlay() > playerHand.HighestPlay() {
-		fmt.Println("DEALER WINS")
+		fmt.Println("--- DEALER WINS ---")
 	} else if dealerHand.HighestPlay() < playerHand.HighestPlay() {
-		fmt.Println("PLAYER WINS")
+		fmt.Println("--- PLAYER WINS ---")
 	} else {
 		fmt.Println("PUSH")
 	}

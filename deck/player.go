@@ -19,7 +19,7 @@ const (
 
 func GetPlayerInput() PlayerAction {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter text: ")
+	fmt.Print("Enter action ([H]it, [S]tand, [D]ouble, or [F]ork/Split): ")
 	input, _ := reader.ReadString('\n')
 	input = strings.ToLower(input)
 	input = strings.ReplaceAll(input, "\n", "")
