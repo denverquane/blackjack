@@ -8,15 +8,14 @@ type Hand struct {
 	values []int
 }
 
-func MakeHand(card1 Card, card2 Card) *Hand {
+func MakeHand(card1 Card) Hand {
 	hand := Hand{
 		cards:  make([]Card, 0),
 		values: make([]int, 1),
 	}
 	hand.values[0] = 0
 	hand.Add(card1)
-	hand.Add(card2)
-	return &hand
+	return hand
 }
 
 func (hand *Hand) Add(card Card) {
@@ -66,7 +65,7 @@ func (hand Hand) HighestPlay() int {
 }
 
 func (hand Hand) ToString(printValues bool) string {
-	str := "Hand has cards:\n"
+	str := "Hand:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToString() + "\n"
 	}
@@ -79,7 +78,7 @@ func (hand Hand) ToString(printValues bool) string {
 	return str
 }
 func (hand Hand) ToAscii(printValues bool) string {
-	str := "Hand has cards:\n"
+	str := "Hand:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToAscii()
 	}

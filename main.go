@@ -36,17 +36,15 @@ func playHand(shoe deck.Shoe) {
 		log.Fatal(err)
 	}
 
-	dealer1, err := shoe.PullRandomCard()
 	player1, err := shoe.PullRandomCard()
-	dealer2, err := shoe.PullRandomCard()
-	player2, err := shoe.PullRandomCard()
 
-	dealerHand := deck.MakeHand(dealer1, dealer2)
-	playerHand := deck.MakeHand(player1, player2)
-	dealer := deck.MakeDealer(DealerHitsSoft17)
+	playerHand := deck.MakeHand(player1)
+	dealer := deck.MakeDealerAndHand(DealerHitsSoft17, &shoe)
+	player2, err := shoe.PullRandomCard()
+	playerHand.Add(player2)
 
 	fmt.Println("Dealer:")
-	fmt.Println(dealerHand.FirstCard().ToAscii() + "  ?")
+	fmt.Println(dealer.UpCard().ToAscii() + "  ?")
 
 	for !playerHand.IsBust() {
 		fmt.Println("Player:")
@@ -65,19 +63,16 @@ func playHand(shoe deck.Shoe) {
 	fmt.Println("- Final Player Hand -")
 	fmt.Println(playerHand.ToAscii(false))
 
-	for dealer.DoesHit(*dealerHand) {
-		card, err := shoe.PullRandomCard()
-		if err != nil {
-			fmt.Println(err)
-		}
-		dealerHand.Add(card)
+	for dealer.DoesHit(&shoe) {
+
 	}
 	fmt.Println("Dealer:")
+	dealerHand := dealer.Hand()
 	fmt.Println(dealerHand.ToAscii(false))
 
-	if dealerHand.HighestPlay() > playerHand.HighestPlay() {
+	if playerHand.IsBust() || (dealerHand.HighestPlay() > playerHand.HighestPlay() && !dealerHand.IsBust()) {
 		fmt.Println("--- DEALER WINS ---")
-	} else if dealerHand.HighestPlay() < playerHand.HighestPlay() {
+	} else if dealerHand.HighestPlay() < playerHand.HighestPlay() || dealerHand.IsBust() {
 		fmt.Println("--- PLAYER WINS ---")
 	} else {
 		fmt.Println("PUSH")

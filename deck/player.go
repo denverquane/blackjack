@@ -17,6 +17,11 @@ const (
 	NULLACTION PlayerAction = '0'
 )
 
+type Player struct {
+	chips map[int]int
+	hand  Hand
+}
+
 func GetPlayerInput() PlayerAction {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter action ([H]it, [S]tand, [D]ouble, or [F]ork/Split): ")
