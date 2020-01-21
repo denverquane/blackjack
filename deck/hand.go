@@ -6,17 +6,17 @@ type Hand struct {
 	cards []Card
 	//array for hard and soft values of the hand
 	values []int
+	split  bool
 }
 
-func MakeHand(card1 Card, card2 Card) *Hand {
+func MakeHand(card1 Card) Hand {
 	hand := Hand{
 		cards:  make([]Card, 0),
 		values: make([]int, 1),
 	}
 	hand.values[0] = 0
 	hand.Add(card1)
-	hand.Add(card2)
-	return &hand
+	return hand
 }
 
 func (hand *Hand) Add(card Card) {
@@ -38,6 +38,18 @@ func (hand *Hand) Add(card Card) {
 	hand.cards = append(hand.cards, card)
 }
 
+func (hand Hand) Split() (h1, h2 Hand) {
+	h1 = MakeHand(hand.cards[0])
+	h1.split = true
+	h2 = MakeHand(hand.cards[1])
+	h2.split = true
+	return h1, h2
+}
+
+func (hand Hand) CanSplit() bool {
+	return len(hand.cards) == 2 && hand.cards[0].Rank == hand.cards[1].Rank
+}
+
 func (hand Hand) IsSoft() bool {
 	for _, v := range hand.cards {
 		if v.Rank == ACE {
@@ -45,6 +57,10 @@ func (hand Hand) IsSoft() bool {
 		}
 	}
 	return false
+}
+
+func (hand Hand) IsSplit() bool {
+	return hand.split
 }
 
 func (hand Hand) IsBust() bool {
@@ -66,7 +82,7 @@ func (hand Hand) HighestPlay() int {
 }
 
 func (hand Hand) ToString(printValues bool) string {
-	str := "Hand has cards:\n"
+	str := "Hand:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToString() + "\n"
 	}
@@ -79,7 +95,7 @@ func (hand Hand) ToString(printValues bool) string {
 	return str
 }
 func (hand Hand) ToAscii(printValues bool) string {
-	str := "Hand has cards:\n"
+	str := "Hand:\n"
 	for _, v := range hand.cards {
 		str += "  " + v.ToAscii()
 	}

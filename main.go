@@ -10,15 +10,16 @@ import (
 
 const SEED = 1234567
 
-const DealerHitsSoft17 = true
-
 //Dumb heuristic, assume the last 14 cards of the deck are off limits
 const MaxCardsInPlay = 14
+
+var Rules deck.Rules
 
 func main() {
 	rand.Seed(time.Now().Unix())
 
 	shoe := deck.MakeShoe(2)
+	Rules = deck.MakeRules(true, true, 2)
 
 	for {
 		for shoe.GetCardsRemainingBeforeCut() > MaxCardsInPlay {
@@ -36,21 +37,20 @@ func playHand(shoe deck.Shoe) {
 		log.Fatal(err)
 	}
 
-	dealer1, err := shoe.PullRandomCard()
 	player1, err := shoe.PullRandomCard()
-	dealer2, err := shoe.PullRandomCard()
-	player2, err := shoe.PullRandomCard()
 
-	dealerHand := deck.MakeHand(dealer1, dealer2)
-	playerHand := deck.MakeHand(player1, player2)
-	dealer := deck.MakeDealer(DealerHitsSoft17)
+	playerHand := deck.MakeHand(player1)
+	dealer := deck.MakeDealerAndHand(Rules.DoesDealerHitSoft17(), &shoe)
+	player2, err := shoe.PullRandomCard()
+	playerHand.Add(player2)
 
 	fmt.Println("Dealer:")
-	fmt.Println(dealerHand.FirstCard().ToAscii() + "  ?")
+	fmt.Println(dealer.UpCard().ToAscii() + "  ?")
 
 	for !playerHand.IsBust() {
 		fmt.Println("Player:")
 		fmt.Println(playerHand.ToAscii(false))
+		fmt.Println("Ideal move: " + string(deck.PlayerStrategy(Rules, playerHand, dealer.UpCard())))
 		action := deck.GetPlayerInput()
 		if action == deck.HIT {
 			card, err := shoe.PullRandomCard()
@@ -65,19 +65,16 @@ func playHand(shoe deck.Shoe) {
 	fmt.Println("- Final Player Hand -")
 	fmt.Println(playerHand.ToAscii(false))
 
-	for dealer.DoesHit(*dealerHand) {
-		card, err := shoe.PullRandomCard()
-		if err != nil {
-			fmt.Println(err)
-		}
-		dealerHand.Add(card)
+	for dealer.DoesHit(&shoe) {
+
 	}
 	fmt.Println("Dealer:")
+	dealerHand := dealer.Hand()
 	fmt.Println(dealerHand.ToAscii(false))
 
-	if dealerHand.HighestPlay() > playerHand.HighestPlay() {
+	if playerHand.IsBust() || (dealerHand.HighestPlay() > playerHand.HighestPlay() && !dealerHand.IsBust()) {
 		fmt.Println("--- DEALER WINS ---")
-	} else if dealerHand.HighestPlay() < playerHand.HighestPlay() {
+	} else if dealerHand.HighestPlay() < playerHand.HighestPlay() || dealerHand.IsBust() {
 		fmt.Println("--- PLAYER WINS ---")
 	} else {
 		fmt.Println("PUSH")
