@@ -1,7 +1,5 @@
 package deck
 
-import "log"
-
 type StrategyAction byte
 
 const (
@@ -26,7 +24,7 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 		dealerIdx = 11
 	}
 	dealerIdx = dealerIdx - 2
-	log.Printf("Dealer index: %d\n", dealerIdx)
+	//log.Printf("Dealer index: %d\n", dealerIdx)
 
 	if playerHand.CanSplit() {
 		//log.Println("Hand is Pairs")
@@ -37,6 +35,8 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 		//log.Println("Hand is soft")
 		if value > 19 {
 			value = 19
+		} else if value < 13 {
+			value = 13
 		}
 		playerIdx = value - 13 //offset for soft hands
 		strategy = DealerHitsSoft17SoftStrategy[playerIdx][dealerIdx]
