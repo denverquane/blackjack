@@ -15,6 +15,10 @@ func MakeDealerAndHand(hitsSoft17 bool, shoe *Shoe) Dealer {
 	return Dealer{hitsSoft17: hitsSoft17, hand: MakeHand(card1)}
 }
 
+func (dealer *Dealer) AddDownCard(card Card) {
+	dealer.hand.Add(card)
+}
+
 func (dealer Dealer) UpCard() Card {
 	return dealer.hand.FirstCard()
 }
@@ -23,15 +27,18 @@ func (dealer Dealer) Hand() Hand {
 	return dealer.hand
 }
 
-func (dealer *Dealer) DoesHit(shoe *Shoe) bool {
+func (dealer Dealer) DoesHit() bool {
 	if dealer.hand.values[0] < 17 || (dealer.hand.values[0] == 17 && dealer.hitsSoft17 && dealer.hand.IsSoft()) {
-		card, err := shoe.PullRandomCard()
-		if err != nil {
-			log.Println(err)
-		}
-		dealer.hand.Add(card)
 		return true
 	} else {
 		return false
 	}
+}
+
+func (dealer *Dealer) Hit(shoe *Shoe) {
+	card, err := shoe.PullRandomCard()
+	if err != nil {
+		log.Println(err)
+	}
+	dealer.hand.Add(card)
 }

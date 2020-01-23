@@ -19,22 +19,22 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 	value := playerHand.HighestPlay()
 	strategy := STND
 	playerIdx := 0
-	dealerIdx := 0
+	dealerIdx := int(dealerCard.Rank)
 	if dealerCard.Rank == JACK || dealerCard.Rank == QUEEN || dealerCard.Rank == KING {
-		dealerCard.Rank = TEN
+		dealerIdx = int(TEN)
 	} else if dealerCard.Rank == ACE {
-		dealerCard.Rank = 11
+		dealerIdx = 11
 	}
-	dealerIdx = int(dealerCard.Rank) - 2
+	dealerIdx = dealerIdx - 2
 	log.Printf("Dealer index: %d\n", dealerIdx)
 
 	if playerHand.CanSplit() {
-		log.Println("Hand is Pairs")
+		//log.Println("Hand is Pairs")
 		playerIdx = value / 2
 		playerIdx = playerIdx - 2
 		strategy = DealerHitsSoft17PairsStrategy[playerIdx][dealerIdx]
 	} else if isSoft {
-		log.Println("Hand is soft")
+		//log.Println("Hand is soft")
 		if value > 19 {
 			value = 19
 		}
@@ -50,7 +50,7 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 		}
 		strategy = DealerHitsSoft17Strategy[playerIdx][dealerIdx]
 	}
-	log.Printf("Player index: %d\n", playerIdx)
+	//log.Printf("Player index: %d\n", playerIdx)
 
 	switch strategy {
 	case STND:

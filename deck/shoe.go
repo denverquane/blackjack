@@ -3,6 +3,7 @@ package deck
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 )
 
@@ -12,6 +13,8 @@ type Shoe struct {
 	//number of card remaining in the deck before a shuffle
 	penetrationShuffle int
 	cardsRemaining     int
+
+	count int
 }
 
 func MakeShoe(numDecks int) Shoe {
@@ -27,6 +30,10 @@ func MakeShoe(numDecks int) Shoe {
 	return shoe
 }
 
+func (shoe Shoe) TrueCount() int {
+	return shoe.count / int(math.Ceil(float64(shoe.cardsRemaining) / 52.0))
+}
+
 func (shoe *Shoe) PullRandomCard() (Card, error) {
 	if len(shoe.decks) > 0 && shoe.cardsRemaining > shoe.penetrationShuffle {
 		i := rand.Intn(len(shoe.decks))
@@ -35,6 +42,12 @@ func (shoe *Shoe) PullRandomCard() (Card, error) {
 			if err != nil {
 				fmt.Println("ERROR: " + err.Error())
 			} else {
+				if card.Rank == TWO || card.Rank == THREE || card.Rank == FOUR || card.Rank == FIVE || card.Rank == SIX {
+					shoe.count++
+				} else if card.Rank == TEN || card.Rank == JACK || card.Rank == QUEEN || card.Rank == KING || card.Rank == ACE {
+					shoe.count--
+				}
+
 				shoe.cardsRemaining--
 				return card, nil
 			}

@@ -81,6 +81,13 @@ func (hand Hand) HighestPlay() int {
 	return 0
 }
 
+func (hand Hand) HasBlackjack() bool {
+	card1 := hand.cards[0].Rank
+	card2 := hand.cards[1].Rank
+	return ((card1 == JACK || card1 == QUEEN || card1 == KING || card1 == TEN) && card2 == ACE) ||
+		((card2 == JACK || card2 == QUEEN || card2 == KING || card2 == TEN) && card1 == ACE)
+}
+
 func (hand Hand) ToString(printValues bool) string {
 	str := "Hand:\n"
 	for _, v := range hand.cards {
