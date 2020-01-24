@@ -19,7 +19,7 @@ const (
 
 type Player struct {
 	chips map[int]int
-	hand  Hand
+	hands []*Hand
 }
 
 func GetPlayerInput() PlayerAction {

@@ -9,14 +9,14 @@ type Hand struct {
 	split  bool
 }
 
-func MakeHand(card1 Card) Hand {
+func MakeHand(card1 Card) *Hand {
 	hand := Hand{
 		cards:  make([]Card, 0),
 		values: make([]int, 1),
 	}
 	hand.values[0] = 0
 	hand.Add(card1)
-	return hand
+	return &hand
 }
 
 func (hand *Hand) Add(card Card) {
@@ -38,7 +38,7 @@ func (hand *Hand) Add(card Card) {
 	hand.cards = append(hand.cards, card)
 }
 
-func (hand Hand) Split() (h1, h2 Hand) {
+func (hand Hand) Split() (h1, h2 *Hand) {
 	h1 = MakeHand(hand.cards[0])
 	h1.split = true
 	h2 = MakeHand(hand.cards[1])

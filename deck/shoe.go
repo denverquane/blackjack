@@ -2,7 +2,7 @@ package deck
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"math"
 	"math/rand"
 )
@@ -31,34 +31,40 @@ func MakeShoe(numDecks int) Shoe {
 }
 
 func (shoe Shoe) TrueCount() int {
-	return shoe.count / int(math.Ceil(float64(shoe.cardsRemaining) / 52.0))
+	return shoe.count / int(math.Ceil(float64(shoe.cardsRemaining)/52.0))
+}
+
+func (shoe *Shoe) PullAndAddToHand(hand *Hand) {
+	card, err := shoe.PullRandomCard()
+	if err != nil {
+		log.Println(err)
+	}
+	hand.Add(card)
 }
 
 func (shoe *Shoe) PullRandomCard() (Card, error) {
 	if len(shoe.decks) > 0 && shoe.cardsRemaining > shoe.penetrationShuffle {
 		i := rand.Intn(len(shoe.decks))
 		if shoe.decks[i].CardsRemaining() > 0 {
-			card, err := shoe.decks[i].PullRandomCard()
-			if err != nil {
-				fmt.Println("ERROR: " + err.Error())
-			} else {
-				if card.Rank == TWO || card.Rank == THREE || card.Rank == FOUR || card.Rank == FIVE || card.Rank == SIX {
-					shoe.count++
-				} else if card.Rank == TEN || card.Rank == JACK || card.Rank == QUEEN || card.Rank == KING || card.Rank == ACE {
-					shoe.count--
-				}
+			card, _ := shoe.decks[i].PullRandomCard()
 
-				shoe.cardsRemaining--
-				return card, nil
+			if card.Rank == TWO || card.Rank == THREE || card.Rank == FOUR || card.Rank == FIVE || card.Rank == SIX {
+				shoe.count++
+			} else if card.Rank == TEN || card.Rank == JACK || card.Rank == QUEEN || card.Rank == KING || card.Rank == ACE {
+				shoe.count--
 			}
+
+			shoe.cardsRemaining--
+			return card, nil
+
 		} else {
 			shoe.decks = removeDeck(shoe.decks, i)
+			return shoe.PullRandomCard()
 		}
-	} else {
-		return Card{}, errors.New("Shoe needs to be reshuffled")
 	}
-	//TODO prob not the best idea to use recursion here?
-	return shoe.PullRandomCard()
+
+	return Card{}, errors.New("Shoe needs to be reshuffled")
+
 }
 
 func (shoe Shoe) GetCardsRemainingBeforeCut() int {

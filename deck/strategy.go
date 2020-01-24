@@ -27,9 +27,18 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 	//log.Printf("Dealer index: %d\n", dealerIdx)
 
 	if playerHand.CanSplit() {
-		//log.Println("Hand is Pairs")
-		playerIdx = value / 2
-		playerIdx = playerIdx - 2
+
+		if playerHand.cards[0].Rank == ACE {
+			playerIdx = 9
+		} else if playerHand.cards[0].Rank == JACK || playerHand.cards[0].Rank == QUEEN || playerHand.cards[0].Rank == KING {
+			playerIdx = 8
+		} else {
+			playerIdx = int(playerHand.cards[0].Rank)
+			playerIdx = playerIdx - 2
+		}
+
+		//log.Printf(playerHand.ToAscii(false))
+		//log.Printf("Hand is Pairs, pIDX:%d dIDX:%d", playerIdx, dealerIdx)
 		strategy = DealerHitsSoft17PairsStrategy[playerIdx][dealerIdx]
 	} else if isSoft {
 		//log.Println("Hand is soft")
@@ -67,14 +76,14 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 		}
 	case HITDBL:
 		//if the hand is already split, and we're allowed to double after a split
-		if isSplit && gameRules.canDoubleAfterSplit {
+		if (isSplit && gameRules.canDoubleAfterSplit) || !isSplit {
 			return DOUBLE
 		} else {
 			return HIT
 		}
 	case STNDDBL:
 		//if the hand is already split, and we're allowed to double after a split
-		if isSplit && gameRules.canDoubleAfterSplit {
+		if (isSplit && gameRules.canDoubleAfterSplit) || !isSplit {
 			return DOUBLE
 		} else {
 			return STAND
@@ -86,16 +95,16 @@ func PlayerStrategy(gameRules Rules, playerHand Hand, dealerCard Card) PlayerAct
 var DealerHitsSoft17Strategy = [10][10]StrategyAction{
 	// Dealer Card ->
 	// 2       3       4       5       6       7       8       9       10      A      Player
-	{HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT},                   //4-8
-	{HIIT, HITDBL, HITDBL, HITDBL, HITDBL, HIIT, HIIT, HIIT, HIIT, HIIT},           //9
-	{HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HIIT, HIIT},   //10
-	{HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HIIT}, //11
-	{HIIT, HIIT, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                   //12
-	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                   //13
-	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                   //14
-	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                   //15
-	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                   //16
-	{STND, STND, STND, STND, STND, STND, STND, STND, STND, STND},                   //17+
+	{HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT, HIIT},                     //4-8
+	{HIIT, HITDBL, HITDBL, HITDBL, HITDBL, HIIT, HIIT, HIIT, HIIT, HIIT},             //9
+	{HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HIIT, HIIT},     //10
+	{HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL}, //11
+	{HIIT, HIIT, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                     //12
+	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                     //13
+	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                     //14
+	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                     //15
+	{STND, STND, STND, STND, STND, HIIT, HIIT, HIIT, HIIT, HIIT},                     //16
+	{STND, STND, STND, STND, STND, STND, STND, STND, STND, STND},                     //17+
 }
 
 var DealerHitsSoft17SoftStrategy = [7][10]StrategyAction{
@@ -113,11 +122,11 @@ var DealerHitsSoft17SoftStrategy = [7][10]StrategyAction{
 var DealerHitsSoft17PairsStrategy = [10][10]StrategyAction{
 	// Dealer Card ->
 	// 2       3       4       5       6       7       8      9       10       A      Player
-	{SPLTDBL, SPLTDBL, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT},           //2,2
-	{SPLTDBL, SPLTDBL, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT},           //3,3
+	{SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT},                 //2,2
+	{SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT},                 //3,3
 	{HIIT, HIIT, HIIT, SPLTDBL, SPLTDBL, HIIT, HIIT, HIIT, HIIT, HIIT},           //4,4
 	{HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HITDBL, HIIT, HIIT}, //5,5
-	{SPLTDBL, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT, HIIT},              //6,6
+	{SPLT, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT, HIIT},                 //6,6
 	{SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, HIIT, HIIT, HIIT, HIIT},                 //7,7
 	{SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, SPLT, SPLT},                 //8,8
 	{SPLT, SPLT, SPLT, SPLT, SPLT, STND, SPLT, SPLT, STND, STND},                 //9,9

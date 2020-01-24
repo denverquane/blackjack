@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/denverquane/blackjack/deck"
 	"log"
 	"math/rand"
@@ -11,18 +10,18 @@ import (
 const SEED = 1234567
 
 //Dumb heuristic, assume the last 14 cards of the deck are off limits
-const MaxCardsInPlay = 14
+const MaxCardsInPlay = 30
 
 var Rules deck.Rules
 
-const TOTALHANDS = 100_000
-const STARTINGBANKROLL = 100000_000
-const MINIMUMBET = 100
+const TOTALHANDS = 1000000
+const STARTINGBANKROLL = 10000000000
+const MINIMUM_BET = 100
 const SHOES_PER_DECK = 6
 
 func main() {
 	rand.Seed(time.Now().Unix())
-	Rules = deck.MakeRules(true, true, SHOES_PER_DECK, 1.5, 10)
+	Rules = deck.MakeRules(true, false, SHOES_PER_DECK, 1.5, 100, false)
 	dealerWins := 0.0
 	playerWins := 0.0
 	ties := 0.0
@@ -35,8 +34,8 @@ func main() {
 	for totalHands < TOTALHANDS {
 		shoe := deck.MakeShoe(SHOES_PER_DECK)
 		for shoe.GetCardsRemainingBeforeCut() > MaxCardsInPlay {
-			trueCount := shoe.TrueCount()
-			bet := MINIMUMBET
+			trueCount := shoe.TrueCount() - 1
+			bet := MINIMUM_BET
 			if trueCount > 0 {
 				if trueCount > Rules.MaxBetSpread() {
 					bet *= Rules.MaxBetSpread()
@@ -50,15 +49,23 @@ func main() {
 				playerRuins++
 				log.Fatal("PLAYER RUIN")
 			}
-			allResults := playHand(&shoe, bet)
+			allResults, betSum := playHand(&shoe, bet)
 
-			playerBankroll += allResults.betOutcome
+			playerBankroll += betSum
+
 			if playerBankroll < minBankroll {
 				minBankroll = playerBankroll
 			} else if playerBankroll > maxBankroll {
 				maxBankroll = playerBankroll
 			}
-			totalHands++
+			totalHands += float64(allResults[PLAYERWIN])
+			playerWins += float64(allResults[PLAYERWIN])
+
+			totalHands += float64(allResults[DEALERWIN])
+			dealerWins += float64(allResults[DEALERWIN])
+
+			totalHands += float64(allResults[PUSH])
+			ties += float64(allResults[PUSH])
 
 			//if res == DEALERWIN {
 			//	dealerWins++
@@ -83,84 +90,15 @@ func main() {
 
 type GameResult byte
 
+type AllResults map[GameResult]int
+
 const (
-	PLAYERWIN  GameResult = 'P'
-	DEALERWIN  GameResult = 'D'
-	PUSH       GameResult = 'T'
-	UNFINISHED GameResult = 'U'
+	PLAYERWIN GameResult = 'P'
+	DEALERWIN GameResult = 'D'
+	PUSH      GameResult = 'T'
 )
 
-type HandResults struct {
-	hands      []*deck.Hand
-	results    []GameResult
-	bets       []int
-	betOutcome int
-}
-
-func playSplitHand(shoe *deck.Shoe, hand *deck.Hand, dealerCard deck.Card, bet int) (handResults HandResults) {
-	handResults.hands = make([]*deck.Hand, 1)
-	handResults.hands[0] = hand
-	handResults.results = make([]GameResult, 1)
-	handResults.bets = make([]int, 1)
-	handResults.bets[0] = bet
-
-	for !hand.IsBust() {
-		//fmt.Println("Player:")
-		//fmt.Println(playerHand.ToAscii(false))
-		idealMove := deck.PlayerStrategy(Rules, *hand, dealerCard)
-		//fmt.Println("Ideal move: " + string(idealMove))
-		//action := deck.GetPlayerInput()
-		action := idealMove
-		if action == deck.HIT {
-			card, err := shoe.PullRandomCard()
-			if err != nil {
-				fmt.Println(err)
-			}
-			hand.Add(card)
-		} else if action == deck.STAND {
-			break
-		} else if action == deck.DOUBLE {
-			handResults.bets[0] *= 2
-			card, err := shoe.PullRandomCard()
-			if err != nil {
-				fmt.Println(err)
-			}
-			hand.Add(card)
-			break
-		} else if action == deck.SPLIT {
-			log.Println("PLAYING SPLIT HAND")
-			hand1, hand2 := hand.Split()
-			handResults.hands = make([]*deck.Hand, 0)
-			handResults.results = make([]GameResult, 0)
-			handResults.bets = make([]int, 0)
-
-			card1Outcome := playSplitHand(shoe, &hand1, dealerCard, bet)
-			card2Outcome := playSplitHand(shoe, &hand2, dealerCard, bet)
-
-			handResults.hands = append(handResults.hands, card1Outcome.hands...)
-			handResults.results = append(handResults.results, card1Outcome.results...)
-			handResults.bets = append(handResults.bets, card1Outcome.bets...)
-			handResults.betOutcome += card1Outcome.betOutcome
-
-			handResults.hands = append(handResults.hands, card2Outcome.hands...)
-			handResults.results = append(handResults.results, card2Outcome.results...)
-			handResults.bets = append(handResults.bets, card2Outcome.bets...)
-			handResults.betOutcome += card2Outcome.betOutcome
-			break
-		} else {
-			break
-		}
-	}
-	return handResults
-}
-
-func playHand(shoe *deck.Shoe, bet int) (allResults HandResults) {
-	allResults.hands = make([]*deck.Hand, 1)
-	allResults.results = make([]GameResult, 1)
-	allResults.betOutcome = 0
-	allResults.bets = make([]int, 1)
-	allResults.bets[0] = bet
-
+func playHand(shoe *deck.Shoe, bet int) (results AllResults, betSum int) {
 	//burn card
 	_, err := shoe.PullRandomCard()
 	if err != nil {
@@ -170,57 +108,98 @@ func playHand(shoe *deck.Shoe, bet int) (allResults HandResults) {
 	player1, err := shoe.PullRandomCard()
 
 	playerHand := deck.MakeHand(player1)
+
 	dealer := deck.MakeDealerAndHand(Rules.DoesDealerHitSoft17(), shoe)
-	player2, err := shoe.PullRandomCard()
-	playerHand.Add(player2)
+
+	shoe.PullAndAddToHand(playerHand)
+
 	dealerDown, err := shoe.PullRandomCard()
 	dealer.AddDownCard(dealerDown)
-	allResults.hands[0] = &playerHand
 
 	//TODO Implement insurance?
-	if playerHand.HasBlackjack() && dealer.Hand().HasBlackjack() {
-		log.Println("Both have blackjack")
-		allResults.betOutcome += 0
-		allResults.results[0] = PUSH
-		return allResults
-	} else if dealer.Hand().HasBlackjack() {
-		log.Println("Dealer alone has blackjack")
-		allResults.betOutcome += -bet
-		allResults.results[0] = DEALERWIN
-		return allResults
-	} else if playerHand.HasBlackjack() {
-		log.Println("Player has blackjack")
-		allResults.betOutcome += int(float64(bet) * Rules.BlackjackPayout())
-		allResults.results[0] = PLAYERWIN
-		return allResults
+
+	results, betSum = playOutEntireHand(shoe, playerHand, dealer, bet, 0)
+
+	return results, betSum
+}
+
+func playOutEntireHand(shoe *deck.Shoe, playerHand *deck.Hand, dealer deck.Dealer, bet, recursionLevel int) (results AllResults, betSum int) {
+	results = make(AllResults)
+	results[PLAYERWIN] = 0
+	results[DEALERWIN] = 0
+	results[PUSH] = 0
+
+	if recursionLevel == 0 {
+		if playerHand.HasBlackjack() && dealer.Hand().HasBlackjack() {
+			log.Println("Both have blackjack")
+			results[PUSH]++
+			return results, 0
+		} else if dealer.Hand().HasBlackjack() {
+			log.Println("Dealer alone has blackjack")
+			results[DEALERWIN]++
+			return results, -bet
+		} else if playerHand.HasBlackjack() {
+			log.Println("Player has blackjack")
+			results[PLAYERWIN]++
+			return results, int(float64(bet) * Rules.BlackjackPayout())
+		}
 	}
 
-	results := playSplitHand(shoe, &playerHand, dealer.UpCard(), bet)
+	for !playerHand.IsBust() {
 
-	//fmt.Println("Dealer:")
-	//fmt.Println(dealer.UpCard().ToAscii() + "  ?")
+		action := deck.PlayerStrategy(Rules, *playerHand, dealer.Hand().FirstCard())
 
+		if action == deck.STAND {
+			break
+			//if hitting, OR the hand is split, but resplits aren't allowed
+		} else if action == deck.HIT || (action == deck.SPLIT && !Rules.Resplit() && playerHand.IsSplit()) {
+			shoe.PullAndAddToHand(playerHand)
+
+			//don't exit, can keep hitting
+		} else if action == deck.DOUBLE {
+			bet *= 2.0
+			shoe.PullAndAddToHand(playerHand)
+
+			break
+		} else if action == deck.SPLIT {
+			log.Printf("PLAYING SPLIT HAND level %d\n", recursionLevel)
+			hand1, hand2 := playerHand.Split()
+
+			shoe.PullAndAddToHand(hand1)
+			shoe.PullAndAddToHand(hand2)
+
+			log.Println(hand1.ToAscii(false))
+			log.Println(hand2.ToAscii(false))
+
+			split1Result, split1Bet := playOutEntireHand(shoe, hand1, dealer, bet, recursionLevel+1)
+			split2Result, split2Bet := playOutEntireHand(shoe, hand2, dealer, bet, recursionLevel+1)
+
+			bet = split1Bet + split2Bet
+
+			for i, v := range split1Result {
+				results[i] += v
+			}
+			for i, v := range split2Result {
+				results[i] += v
+			}
+
+			return results, bet
+		} else {
+			break
+		}
+	}
 	for dealer.DoesHit() {
 		dealer.Hit(shoe)
 	}
-	dealerHand := dealer.Hand()
 
-	allResults.results = make([]GameResult, len(results.hands))
-	for i, v := range results.hands {
-		if len(results.hands) > 1 {
-			log.Println(v.ToString(false))
-		}
-		if v.IsBust() || (dealerHand.HighestPlay() > v.HighestPlay() && !v.IsBust()) {
-			allResults.betOutcome += -results.bets[i]
-			allResults.results[i] = DEALERWIN
-		} else if dealerHand.HighestPlay() < v.HighestPlay() || v.IsBust() {
-			allResults.betOutcome += results.bets[i]
-			allResults.results[i] = PLAYERWIN
-		} else {
-			allResults.betOutcome += 0
-			allResults.results[i] = PUSH
-		}
+	if playerHand.IsBust() || (dealer.Hand().HighestPlay() > playerHand.HighestPlay()) {
+		results[DEALERWIN]++
+		return results, -bet
+	} else if dealer.Hand().HighestPlay() < playerHand.HighestPlay() || dealer.Hand().IsBust() {
+		results[PLAYERWIN]++
+		return results, bet
+	} else {
+		results[PUSH]++
+		return results, 0
 	}
-
-	return allResults
 }
